@@ -1,37 +1,44 @@
 # dsh-terminal-theme
 
-> Give the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) terminal panel its own color scheme — scoped to the terminal only, never the rest of DSH — and import new palettes from JSON.
+English | [中文](README.zh.md)
 
-给 DSH 的**终端面板**单独设置配色：DSH 其余界面继续使用当前主题，终端可以选内置主题或导入自己的 JSON 主题。
+Color themes for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) terminal panel: choose a built-in palette, or import your own from JSON. The colors apply to the terminal only — the rest of DSH keeps the active theme.
 
-## 安装
+## Features
 
-把仓库 clone 到本地任意目录，然后在 DSH 的插件管理器里以该目录作为本地 bundle 安装：
+- **Terminal-only colors.** Every rule is scoped to the terminal panel, so the sidebar, the conversation, and Settings still read the DSH theme tokens.
+- **Independent of light and dark.** A terminal theme keeps its colors when the application switches scheme.
+- **Importable palettes.** Paste JSON or load a `.json` file; themes are validated, normalized, and stored in the browser.
+- **Fully reversible.** Pick "Follow app theme" and the terminal returns to the stock DSH appearance; nothing else is touched.
+
+## Install
+
+Clone the repository, then install that directory as a local bundle from the DSH plugin manager:
 
 ```bash
 git clone https://github.com/wnanbei/dsh-terminal-theme.git
 ```
 
-安装后 DSH 会以软链方式把这个目录接入当前 profile（`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`），仓库里的改动下次重载页面即可生效，不需要重新打包。
+DSH links the directory into the active profile (`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`), so later edits in the repository take effect on the next page reload without repacking.
 
-> 发布到 npm 之后也可以直接 `pnpm add dsh-terminal-theme` 后再在插件列表里启用。
+> Once published to npm, `pnpm add dsh-terminal-theme` works the same way; enable the bundle afterwards.
 
-## 使用
+## Usage
 
-1. 打开右侧终端面板，进入「设置 → 终端配色」。
-2. 在「颜色主题」卡片里点选一个主题，终端面板立即改为该配色。
-3. 选「跟随应用主题」即可完全恢复默认（终端重新跟随 DSH 主题，含亮/暗切换）。
+1. Open the terminal panel in the right sidebar, then go to **Settings → Terminal colors**.
+2. Pick a card under **Color themes**; the terminal repaints immediately.
+3. Pick **Follow app theme** to restore the default, including the light/dark switch.
 
-导入自定义主题：
+Importing a theme:
 
-- 在「导入颜色主题」里粘贴 JSON，点「导入并应用」；或点「从文件导入」选择 `.json` 文件。
-- 「填入模板」会写入一份可直接修改的完整示例。
-- 「复制当前主题」把当前配色导出为 JSON，改个名字即可再导入，作为新主题。
-- 自定义主题卡片右上角的 `×` 可删除。
+- Paste JSON into **Import a theme** and press **Import and apply**, or press **Import from file** to load a `.json` file.
+- **Fill template** writes a complete, directly editable example.
+- **Copy current theme** exports the active palette; rename it and import it back to create a variant.
+- The `×` on a custom theme card deletes it.
 
-主题保存在本机浏览器（`localStorage`），不写入 profile 配置，所以不会随 DSH 升级丢失，也不会同步到其他浏览器。
+Themes live in the browser (`localStorage`), not in the profile configuration, so they survive DSH upgrades and stay out of other browsers.
 
-## 主题 JSON 格式
+## Theme JSON format
 
 ```json
 {
@@ -49,38 +56,38 @@ git clone https://github.com/wnanbei/dsh-terminal-theme.git
 }
 ```
 
-| 字段 | 必填 | 说明 |
+| Field | Required | Description |
 | --- | --- | --- |
-| `name` | 是 | 1–60 个字符的显示名 |
-| `background` / `foreground` | 是 | 终端底色与默认文字色 |
-| `cursor` | 否 | 光标色，默认取 `foreground` |
-| `selection` | 否 | 选区底色，默认取 `foreground` 的 30% |
-| `ansi` | 是 | 16 个颜色，顺序为 黑/红/绿/黄/蓝/洋红/青/白 后接 8 个亮色；只写 8 个时亮色沿用前 8 个 |
-| `extended` | 否 | 最多 240 个颜色，对应 256 色里的 16–255 |
+| `name` | yes | Display name, 1–60 characters |
+| `background` / `foreground` | yes | Terminal background and default text color |
+| `cursor` | no | Cursor color; defaults to `foreground` |
+| `selection` | no | Selection fill; defaults to `foreground` at 30% |
+| `ansi` | yes | 16 colors: black, red, green, yellow, blue, magenta, cyan, white, then the 8 bright variants. 8 colors are accepted too and reused for the bright half |
+| `extended` | no | Up to 240 colors for indexes 16–255 of the 256-color palette |
 
-颜色必须写成十六进制（`#rgb` 或 `#rrggbb`，会统一规整为小写 `#rrggbb`）；其他写法在导入时会被拒绝并提示原因。
+Colors must be hexadecimal (`#rgb` or `#rrggbb`, normalized to lowercase `#rrggbb`); anything else is rejected on import with the reason shown on the page.
 
-## 实现说明
+## How it works
 
-- 所有规则都限定在 `[data-sidebar-terminal]` 子树内：在这个子树重新绑定 `--dsw-alias-bg-base`、`--dsw-alias-label-primary`，并覆盖 xterm DOM 渲染器的 `.xterm-fg-N` / `.xterm-bg-N` 规则，因此不会改动 DSH 全局主题 token。
-- 不替换、不包裹终端组件，也不读写终端的私有状态；取消选择时只是移除这些样式，终端立即回到 DSH 默认外观。
-- 终端插件自带的 OSC 颜色查询、对比度调整、光标可见性等行为保持不变。
-- 新增主题只需在 `client.js` 的 `BUILTINS` 里追加一项，或直接用设置页导入。
+- All rules are scoped to the `[data-sidebar-terminal]` subtree: `--dsw-alias-bg-base` and `--dsw-alias-label-primary` are rebound there, and the xterm DOM renderer's `.xterm-fg-N` / `.xterm-bg-N` rules are overridden. No global DSH theme token changes.
+- The plugin neither replaces nor wraps the terminal component, and never reads or writes its private state. Deselecting a theme only removes the injected stylesheet.
+- The terminal's own OSC color handling, contrast adjustment, and cursor visibility logic keep working as before.
+- Another built-in theme needs one entry in `BUILTINS` in `client.js`; anything else can go through the Settings page.
 
-## 内置主题
+## Built-in themes
 
-Dracula、Nord、Solarized Dark / Light、Gruvbox Dark、One Dark、Tokyo Night、Catppuccin Mocha、GitHub Light。
+Dracula, Nord, Solarized Dark / Light, Gruvbox Dark, One Dark, Tokyo Night, Catppuccin Mocha, GitHub Light.
 
-## 开发
+## Development
 
 ```
-client.js   浏览器半（配色样式 + 设置页）
-index.js    Host 半（空实现，仅用于注册 bundle 行）
-locale/     插件管理器与设置导航的显示名
-icon.svg    插件图标
+client.js   browser half: scoped palette stylesheet + Settings page
+index.js    host half: inert, only registers the bundle row
+locale/     display name and description for the plugin manager
+icon.svg    plugin icon
 ```
 
-改完 `client.js` 后在 DSH 里重载页面即可看到效果；插件管理器的安装记录指向本目录，无需重新安装。
+Reload the page after editing `client.js`: the plugin manager's install record points at this directory, so no reinstall is needed.
 
 ## License
 
