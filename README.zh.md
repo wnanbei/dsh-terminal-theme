@@ -93,9 +93,32 @@ client.js   浏览器半：限定作用域的配色样式表 + 设置页
 index.js    Host 半：空实现，仅用于注册 bundle 行
 locale/     插件管理器里的显示名与描述
 icon.svg    插件图标
+scripts/    预检脚本（CI 与打 tag 前共用）
+.github/    verify / release 工作流
 ```
 
 改完 `client.js` 后重载页面即可：插件管理器的安装记录指向本目录，不需要重新安装。
+
+## 发版
+
+版本遵循语义化版本：主题 JSON 结构或已发布的内置主题 id 发生不兼容变化时升 **major**；新增内置主题、设置页新功能升 **minor**；修 bug 升 **patch**。
+
+`package.json` 的 `version` 是唯一版本来源，tag 为 `v<version>`：
+
+```bash
+node scripts/check.mjs                      # 与 CI 相同的预检
+npm version patch -m "chore(release): v%s"  # 或 minor / major
+git push --follow-tags
+```
+
+推 tag 会触发 `.github/workflows/release.yml`：tag 与 `package.json` 版本不一致则直接失败；随后重跑预检、打包，并创建一个以 tag 命名的 GitHub Release，附带 `.tgz`，说明由上一个 tag 以来的提交生成。
+
+这个 tarball 本身也是可安装的 spec，所以不发 npm 也能锁版本：
+
+- `https://github.com/wnanbei/dsh-terminal-theme/releases/download/v1.2.0/dsh-terminal-theme-1.2.0.tgz` 固定到该版本
+- `https://github.com/wnanbei/dsh-terminal-theme` 跟随默认分支
+
+每次推 `main` 会跑 `.github/workflows/verify.yml`，内容就是 `node scripts/check.mjs`。
 
 ## License
 

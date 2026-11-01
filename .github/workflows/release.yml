@@ -1,0 +1,68 @@
+name: release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Require the tag to match package.json
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$version" != "${GITHUB_REF_NAME}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match package version ${version}"
+            exit 1
+          fi
+
+      - name: Run checks
+        run: node scripts/check.mjs
+
+      - name: Pack the plugin
+        run: |
+          npm pack --pack-destination .
+          ls -1 ./*.tgz
+
+      - name: Build release notes
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          tarball="dsh-terminal-theme-${version}.tgz"
+          previous="$(git describe --tags --abbrev=0 "${GITHUB_REF_NAME}^" 2>/dev/null || true)"
+          {
+            echo "## Install in DSH"
+            echo
+            echo "**Plugins → Add plugin**, then paste one of:"
+            echo
+            echo "- \`https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}/${tarball}\` — pinned to this release"
+            echo "- \`https://github.com/${GITHUB_REPOSITORY}\` — tracks the default branch"
+            echo
+            echo "## Changes"
+            echo
+            if [ -n "$previous" ]; then
+              echo "Since ${previous}:"
+              echo
+              git log --no-merges --pretty='- %s (%h)' "${previous}..${GITHUB_REF_NAME}"
+            else
+              git log --no-merges --pretty='- %s (%h)' "${GITHUB_REF_NAME}"
+            fi
+          } > release-notes.md
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" ./*.tgz \
+            --title "${GITHUB_REF_NAME}" \
+            --notes-file release-notes.md

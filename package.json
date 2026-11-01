@@ -47,5 +47,8 @@
       "immediately": true,
       "inject": []
     }
+  },
+  "scripts": {
+    "check": "node scripts/check.mjs"
   }
 }

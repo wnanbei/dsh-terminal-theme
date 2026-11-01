@@ -93,9 +93,32 @@ client.js   browser half: scoped palette stylesheet + Settings page
 index.js    host half: inert, only registers the bundle row
 locale/     display name and description for the plugin manager
 icon.svg    plugin icon
+scripts/    preflight checks (CI and pre-tag)
+.github/    verify and release workflows
 ```
 
 Reload the page after editing `client.js`: the plugin manager's install record points at this directory, so no reinstall is needed.
+
+## Releasing
+
+Versions follow Semantic Versioning: a **major** bump when the theme JSON schema or an existing built-in id changes incompatibly, a **minor** bump for new palettes or Settings features, a **patch** bump for fixes.
+
+`version` in `package.json` is the only source of truth, and the tag is `v<version>`:
+
+```bash
+node scripts/check.mjs                      # the preflight CI runs
+npm version patch -m "chore(release): v%s"  # or minor / major
+git push --follow-tags
+```
+
+Pushing the tag runs `.github/workflows/release.yml`, which refuses a tag that disagrees with `package.json`, re-runs the checks, packs the plugin, and publishes a GitHub Release named after the tag — with the `.tgz` attached and notes generated from the commits since the previous tag.
+
+The tarball is an install spec too, so a release can be pinned without npm:
+
+- `https://github.com/wnanbei/dsh-terminal-theme/releases/download/v1.2.0/dsh-terminal-theme-1.2.0.tgz` pins that release
+- `https://github.com/wnanbei/dsh-terminal-theme` tracks the default branch
+
+Every push to `main` runs `.github/workflows/verify.yml`, which is the same `node scripts/check.mjs`.
 
 ## License
 
