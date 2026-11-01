@@ -13,15 +13,23 @@
 
 ## 安装
 
-把仓库 clone 到本地任意目录，然后在 DSH 的插件管理器里以该目录作为本地 bundle 安装：
+用 DSH 原生的**插件页**安装：**添加插件** → 粘贴一个 spec → **安装**。以下三种都可用：
+
+| Spec | 适用场景 |
+| --- | --- |
+| `dsh-terminal-theme` | 包发布到 npm 之后 |
+| `https://github.com/wnanbei/dsh-terminal-theme` | 直接从 GitHub 装；pnpm 克隆仓库，无需构建 |
+| `/Users/wnanbei/code/dsh-terminal-theme` | 从本地 clone 装，之后继续改代码（装成 `link:` 依赖） |
+
+对话框还接受 tarball、`git+https://…` 地址，以及只为这一次安装指定 registry。没有声明 bundle patch 的包会被拒绝，所以仓库根目录必须始终是一个完整可装的包。
+
+本地目录安装会把该目录软链进当前 profile（`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`），之后在 clone 里改动，重载页面即生效，不用重新打包；从 GitHub 安装则是把包复制进 profile，更新需要先卸载再重装。两种方式下，已安装的包都会被识别为“已安装”，要换安装来源请先卸载。
 
 ```bash
 git clone https://github.com/wnanbei/dsh-terminal-theme.git
 ```
 
-DSH 会以软链方式把这个目录接入当前 profile（`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`），之后仓库里的改动在下次重载页面时生效，不需要重新打包。
-
-> 发布到 npm 之后也可以直接 `pnpm add dsh-terminal-theme`，再在插件列表里启用。
+> Agent 走的是同一个操作：`plugin_manager` 的 `install_bundle`，参数填上面任意一个 spec。
 
 ## 使用
 

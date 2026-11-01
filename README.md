@@ -13,15 +13,23 @@ Color themes for the [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-
 
 ## Install
 
-Clone the repository, then install that directory as a local bundle from the DSH plugin manager:
+The native **Plugins** page installs it: **Add plugin** → paste a spec → **Install**. Three specs work:
+
+| Spec | When to use |
+| --- | --- |
+| `dsh-terminal-theme` | Once the package is published to npm |
+| `https://github.com/wnanbei/dsh-terminal-theme` | Straight from GitHub; pnpm clones the repository, and there is no build step |
+| `/Users/wnanbei/code/dsh-terminal-theme` | From a local clone you keep editing (installs a `link:` dependency) |
+
+The dialog also takes a tarball, a `git+https://…` address, and a different registry for that one install. It refuses a package that declares no bundle patch, so the repository root must stay a complete package.
+
+A local-directory install links the folder into the active profile (`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`), so later edits in that clone take effect on the next page reload without repacking. A GitHub install copies the package into the profile instead, so updating means removing and re-adding it. Either way an existing installation is reported as already installed — remove the bundle first to switch sources.
 
 ```bash
 git clone https://github.com/wnanbei/dsh-terminal-theme.git
 ```
 
-DSH links the directory into the active profile (`~/.dsh/profiles/<profile>/node_modules/dsh-terminal-theme`), so later edits in the repository take effect on the next page reload without repacking.
-
-> Once published to npm, `pnpm add dsh-terminal-theme` works the same way; enable the bundle afterwards.
+> Agents use the same operation: `plugin_manager` `install_bundle` with one of these specs.
 
 ## Usage
 
