@@ -1,0 +1,7 @@
+{
+  "meta": {
+    "title": "Terminal Colors",
+    "description": "Give the terminal panel its own color scheme, keep the rest of DSH untouched, and import new themes from JSON."
+  },
+  "nav": "Terminal colors"
+}
